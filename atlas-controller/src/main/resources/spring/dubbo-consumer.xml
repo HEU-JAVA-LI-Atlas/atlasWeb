@@ -29,7 +29,7 @@
     <!-- 直连+不检查 -->
     <dubbo:registry address="N/A" check="false"/>
 	<!-- 4： 调用此接口对应的实现类-->
-	<dubbo:reference interface="com.atlas.service.TableService" id="tableService" url="dubbo://127.0.0.1:20880"/>
+	<!-- <dubbo:reference interface="com.atlas.service.TableService" id="tableService" url="dubbo://127.0.0.1:20880"/> -->
 	
 	   
 	<!-- 设置全局超时时间 -->

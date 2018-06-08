@@ -1,6 +1,6 @@
 package com.atlas.service;
 
-import com.atlas.po.NodeTable;
+import com.atlas.po.nodeTable;
 
 /**
  * 
@@ -15,14 +15,14 @@ public interface TableService {
 	 * @param table
 	 * @throws Exception
 	 */
-	public void add(NodeTable table) throws Exception;
+	public void add(nodeTable table) throws Exception;
 
 	/**
 	 * @describe 删除结点表
 	 * @param table
 	 * @throws Exception
 	 */
-	public void delete(NodeTable table) throws Exception;
+	public void delete(nodeTable table) throws Exception;
 	// public List<nodeTableAttr> listUserByAge(int age) throws Exception;
 
 	/**
@@ -31,7 +31,7 @@ public interface TableService {
 	 * @return
 	 * @throws Exception
 	 */
-	public NodeTable getTableById(String tableid) throws Exception;
+	public nodeTable getTableById(String tableid) throws Exception;
 
 	public void userJedisTest();
 

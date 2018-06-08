@@ -5,7 +5,5 @@
     <artifactId>atlas-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <groupId>com-atlas</groupId>
   <artifactId>atlas-po</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
 </project>
