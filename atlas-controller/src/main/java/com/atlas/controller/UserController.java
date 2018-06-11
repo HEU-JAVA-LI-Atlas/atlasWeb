@@ -1,11 +1,37 @@
 package com.atlas.controller;
 
+
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Transformer;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -15,31 +41,24 @@ import com.atlas.po.node;
 import com.atlas.po.nodeTable;
 import com.atlas.po.page;
 import com.atlas.po.people;
+import com.atlas.utils.AssociateUtil;
 import com.atlas.utils.XmlUtil;
 
 import net.sf.json.JSONObject;
 
-/**
- * 
- * @author 高伟鹏 原作 李文渊学姐
- * @email gaoweipeng3@gmail.com
- * @version 创建时间：2018年5月14日 下午8:13:39
- * @describe 代码阅读与修改命名
- */
+
+
 
 @Controller
 @RequestMapping("lwy")
 
-public class UserController {
-	
-	/**
-	 * 这里设置成全局的,做缓存
-	 */
-	 List<people> p=new ArrayList<people>();
+public class UserController {  
+	   List<people> p=new ArrayList<people>();
 	   List<connection> connect=new ArrayList<connection>();   
-	   List<node> nodelist=new ArrayList<node>();
+	   //List<node> nodelist=new ArrayList<node>();
 	   //List<nodeTable> tablelist=new ArrayList<nodeTable>();
-	   Map<String,List<nodeTable>> nodemap=new HashMap<String, List<nodeTable> >();	   
+	   Map<String,List<nodeTable>> nodemap=new HashMap<String, List<nodeTable> >();	 
+	   Map<String,List<node>> nodeTreeMap=new HashMap<String,List<node>>();
 	   Map<String,List<nodeTable>> peopleInfomap=new HashMap<String, List<nodeTable> >();
 public void IninJstree(){
 	
@@ -47,8 +66,8 @@ public void IninJstree(){
 //新增节点
 @RequestMapping("/createNode.do")
 @ResponseBody
-public void changedata(String changedata) {
- 
+public void createNode(String changedata,String pageTitle) {
+	    List<node> nodelist=new ArrayList<node>();
 	    //System.out.println(changedata);
 	
 		String nodeStr=changedata;
@@ -57,7 +76,14 @@ public void changedata(String changedata) {
 		node node=(node)JSONObject.toBean(jsonObject, node.class);
 		nodelist.add(node);
 		//初始化nodemap中一个节点的数据
+if(nodeTreeMap.get(pageTitle) != null){
+	nodeTreeMap.get(pageTitle).add(node);
+}else{
+	nodeTreeMap.put(pageTitle, nodelist);
+}
+	
 		nodemap.put(node.getId(), null);
+		//nodeTreeMap.get(pageTitle).add(node);
 		//通过nodeid得到node的parentid，通过parentid得到父节点的tablist  
 		if(node.getParentId() != null){
 			
@@ -67,11 +93,11 @@ public void changedata(String changedata) {
 			}
 		}
 		
-		System.out.println(nodelist);
+		System.out.println(nodeTreeMap.get(pageTitle));
 		
-}
+  }
 //重命名节点
-	@RequestMapping("/renameNode.do")
+	/*@RequestMapping("/renameNode.do")
 	@ResponseBody
 	public void renameNode(String changedata,String nodeid){
 		for(node n:nodelist){
@@ -91,11 +117,11 @@ public void changedata(String changedata) {
 			}
 		}
 		
-	}
+	}*/
 //保存表格中的数据
 @RequestMapping("/tablePost.do")
 @ResponseBody
-public void changetabledata(String nodeid,String tableid,String tabletitle,String changetabledata) {
+public void changetabledata(String nodeid,String tableid,String tabletitle,String changetabledata,String pageTitle) {
 	  //System.out.println(nodeid);
 	  nodeTable t=new nodeTable(tableid,tabletitle,changetabledata);
 	  List<nodeTable> nt=new ArrayList<nodeTable>();
@@ -107,23 +133,23 @@ public void changetabledata(String nodeid,String tableid,String tabletitle,Strin
 		  nodemap.get(nodeid).add(t);
 	  }
 	//遍历nodelist获取nodeid对应的node实体类
-	 for (node node: nodelist) {
-     if(node.getId().equals(nodeid)){
-  	   
-         //System.out.println(t.getData());
-         node.setTablelist(nodemap.get(nodeid));        
-     }
- }
+	 for (node node: nodeTreeMap.get(pageTitle)) {
+       if(node.getId().equals(nodeid)){
+    	   
+           //System.out.println(t.getData());
+           node.setTablelist(nodemap.get(nodeid));        
+       }
+   }
 	
- System.out.println(nodemap);
- //attr.setId(nodeid);
+   System.out.println(nodemap);
+   //attr.setId(nodeid);
 }
 
 //加载表格数据
 //如果tab已经存在在list中就加载数据 如果不存在就把new一个nodetable
 @RequestMapping(value="loadtabledata.do",produces = {"application/text;charset=UTF-8"})
 @ResponseBody
-public String changedata(String tabtitle,String nodeid) {
+public String changedata(String tabtitle,String nodeid,String pageTitle) {
 	 String data=null;
 	 
 	 List<nodeTable> tlist=new ArrayList<nodeTable>();
@@ -136,7 +162,7 @@ public String changedata(String tabtitle,String nodeid) {
 		 tlist=nodemap.get(nodeid);
 	 }else{
 		 //父节点是否有属性表
-		 for(node node:nodelist){
+		 for(node node:nodeTreeMap.get(pageTitle)){
 			 if(node.getId().equals(nodeid)){
 				 
 				nodemap.put(nodeid, nodemap.get(node.getParentId())) ;
@@ -156,7 +182,7 @@ public String changedata(String tabtitle,String nodeid) {
 			}
 		 }
 	 }
-  //System.out.println("load:"+data);
+    //System.out.println("load:"+data);
 	return data;
 	
 }
@@ -165,7 +191,7 @@ public String changedata(String tabtitle,String nodeid) {
 @RequestMapping("loadpeopletab.do")
 @ResponseBody
 public List<String>  loadTab(String nodeid) {
-	 List<String> tabtitle=new ArrayList();
+	 List<String> tabtitle=new ArrayList<>();
 	 //遍历list
 	 if(nodemap.get(nodeid)!=null){
 		 int len=nodemap.get(nodeid).size();
@@ -183,7 +209,7 @@ public List<String>  loadTab(String nodeid) {
 @RequestMapping("/peoplePost.do")
 @ResponseBody
 public void savePeople(String data,String nodeid) {
-   
+     
 	    //System.out.println(data);	
 		String nodeStr=data;		
 		JSONObject jsonObject=JSONObject.fromObject(nodeStr);
@@ -191,12 +217,14 @@ public void savePeople(String data,String nodeid) {
 		people people=(people)JSONObject.toBean(jsonObject, people.class);
 		
 		p.add(people);
+		if(nodemap.get(nodeid)!=null){
+			peopleInfomap.put(people.getId(), nodemap.get(nodeid));
+		}
 		
-		peopleInfomap.put(people.getId(), nodemap.get(nodeid));
 		//people.setInfoTableList(nodemap.get(nodeid));
 		//System.out.println(peopleInfomap);
 		
-}
+  }
 
 //保存人员infotable
 @RequestMapping("/infotablePost.do")
@@ -233,7 +261,7 @@ public String loadinfotable(String tabtitle,String pid) {
 	    	}
 	 }
 	
-  //System.out.println("load:"+data);
+    //System.out.println("load:"+data);
 	return data;
 	
 }
@@ -242,21 +270,21 @@ public String loadinfotable(String tabtitle,String pid) {
 @RequestMapping("/loadinfotab.do")
 @ResponseBody
 public List<String> loadinfotab(String pid) {
-	 List<String> peopletab=new ArrayList();
+	 List<String> peopletab=new ArrayList<>();
 	 int len=peopleInfomap.get(pid).size();
 	 for(int i=0;i<len;i++)
 	 {
 		 String tabt=peopleInfomap.get(pid).get(i).getTabletitle();
 		 peopletab.add(tabt);
 	 }
-  return peopletab;
+    return peopletab;
 }
 
 //保存人员关系的信息
 @RequestMapping("/connectPost.do")
 @ResponseBody
 public void saveConnection(String data) {
- 
+   
 	    //System.out.println(data);	
 		String nodeStr=data;		
 		JSONObject jsonObject=JSONObject.fromObject(nodeStr);
@@ -265,58 +293,70 @@ public void saveConnection(String data) {
 		connect.add(connection);
 		//System.out.println("connection:"+connection);
 		
-}
+  }
 @RequestMapping("/pagePost.do")
 @ResponseBody
 public void savepagedata(String pageid,String pagetitle) throws IOException {
 	   //把tree和page存入map后将map转化为xml
-     page page;
-     page=new  page();
-     page.setId(pageid);
-     page.setTitle(pagetitle);
-     page.setPeople(p);
-     page.setConnect(connect);
-     // System.out.println(pageid);
-     //将得到的page转为xml
-     
-     String s=XmlUtil.getBeanXml(page);
-     
-     //System.out.println(XmlUtil.getBeanXml(page));
-     XmlUtil.strChangeXML(s,pagetitle);
-     //String xmlPath = "E:/tupu/test/nodes1.xml";
-     //保存到本地文件中
-  
+       page page;
+       page=new  page();
+       page.setId(pageid);
+       page.setTitle(pagetitle);
+       page.setPeople(p);
+       page.setConnect(connect);
+       // System.out.println(pageid);
+       //将得到的page转为xml
+       
+       String s=XmlUtil.getBeanXml(page);
+       
+       //System.out.println(XmlUtil.getBeanXml(page));
+       XmlUtil.strChangeXML(s,pagetitle);
+       //String xmlPath = "E:/tupu/test/nodes1.xml";
+       //保存到本地文件中
+    
 }
 
 //图谱前台显示
-Map<String,Map<String,Object>> pageMap=new HashMap<String, Map<String,Object>>();	   
+	   
 @RequestMapping("/xmlPost.do")
 @ResponseBody
-public Map<String,Object> peopleArray(String data,String fileName,String associateMethod) throws Exception {
+public Map<String,Object> loadPage(String data,String fileName) throws Exception {
+	people p=new people();
+	connection c=new connection();
+	Map<String,Object> map=new HashMap<String, Object>();
+	map=XmlUtil.readpeopleXml(data,p,c);
+	return map;
+}
+
+//交差并补运算
+Map<String,Map<String,Object>> pageMap=new HashMap<String, Map<String,Object>>();
+@RequestMapping("/xmlCalculate.do")
+@ResponseBody
+public Map<String,Object> calculatePages(String data,String fileName,String associateMethod) throws Exception {
 	//System.out.println(fileName);
 	people p=new people();
 	connection c=new connection();
 	Map<String,Object> map=new HashMap<String, Object>();
 	Map<String,Object> associateMap=new HashMap<String, Object>();
 	map=XmlUtil.readpeopleXml(data,p,c);
-  //加载两次得到两个map
+    //加载两次得到两个map
 	//放到一个pageMap中
-	/*pageMap.put(fileName, map);
+	pageMap.put(fileName, map);
 	if(pageMap.size()==2){
 		//调用函数取出人员节点的list并做相交
 	    Set<Entry<String, Map<String, Object>>> entrySet=pageMap.entrySet();  
 	    Iterator<Entry<String, Map<String, Object>>> it=entrySet.iterator();  
 	    
 	    List<String> pList_1=new ArrayList<String>();
-      List<people> firstPeopleList=new ArrayList<people>();
-      List<connection> firstConnectList=new ArrayList<connection>();
-      firstPeopleList=null;
-  
+        List<people> firstPeopleList=new ArrayList<people>();
+        List<connection> firstConnectList=new ArrayList<connection>();
+        firstPeopleList=null;
+    
 	List<String> pList_2=new ArrayList<String>();
-  List<people> secondPeopleList=new ArrayList<people>();
-  List<connection> secondConnectList=new ArrayList<connection>();
-  secondPeopleList=null;
-  
+    List<people> secondPeopleList=new ArrayList<people>();
+    List<connection> secondConnectList=new ArrayList<connection>();
+    secondPeopleList=null;
+    
 	while(it.hasNext())  
 	{  
 	    Entry<String, Map<String, Object>> me=it.next();  
@@ -337,25 +377,24 @@ public Map<String,Object> peopleArray(String data,String fileName,String associa
 	    }	      
 	}  
 	switch(associateMethod){
-  case "intersection":
-  	associateMap=AssociateUtil.getIntersection(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
-  case "substract":
-  	associateMap=AssociateUtil.getSubtract(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
-  case "union":
-  	associateMap=AssociateUtil.getUnion(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
-  case "disjunction":
-  	associateMap=AssociateUtil.getDisjunction(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break; 
-  default:
-      associateMap=map; break;
-  }
+    case "intersection":
+    	associateMap=AssociateUtil.getIntersection(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
+    case "subtract":
+    	associateMap=AssociateUtil.getSubtract(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
+    case "union":
+    	associateMap=AssociateUtil.getUnion(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
+    case "disjunction":
+    	associateMap=AssociateUtil.getDisjunction(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break; 
+    default:
+        associateMap=map; break;
+    }
 	}
-	//System.out.println(pageMap);*/
-	return map;
+	//System.out.println(pageMap);
+	//return map;
 	
-	//return associateMap;
+	return associateMap;
 	
 }
-
 }
 
 

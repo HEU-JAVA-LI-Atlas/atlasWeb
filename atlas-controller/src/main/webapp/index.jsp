@@ -29,7 +29,6 @@
 
 .fileinput-button {
 	position: relative;
-	display: inline-block;
 	overflow: hidden;
 }
 
@@ -48,17 +47,16 @@ width:30px
 </head>
 
 <body>
-    <script type="text/javascript" src="js/operateXML.js"></script>
+
 	<!-- 工具栏 -->
-	<div>
 	<div id="toolbar" style="font-size: 12px; background: #E0E0E0; border: 1px solid #E0E0E0; width: 100%; height: 50px">
-		<a href="javascript:void(0)" id="file" class="easyui-menubutton" data-options="menu:'#m1',iconCls:'icon-edit'">文件</a>
+		<a  id="file" class="easyui-menubutton" data-options="menu:'#m1',iconCls:'icon-edit'">文件</a>
 		<div id="m1" style="width: 150px;">
 			<div class="fileinput-button"
 				data-options="iconCls:'icon-large-smartart'">
 				<span>打开</span> <input id="openFile" runat="server" onchange="javascript:openPageAsXml(this);" type="file">
 			</div>
-			<div class="save" data-options="iconCls:'icon-save'">保存</div>
+			<div class="save " data-options="iconCls:'icon-save'">保存</div>
 			<div class="create" data-options="iconCls:'icon-add'">新建</div>
 		</div>
 		<a href="javascript:void(0)" id="mode" class="easyui-menubutton" data-options="menu:'#m2',iconCls:'icon-large-clipart'">自定义模式</a>
@@ -68,34 +66,46 @@ width:30px
 			<div>班级模式</div>
 		</div>
 		<span>线条样式</span> 
-		<a href="#"><img src="img/line.png" class="lineConf"/></a>
-		 <a href="#"><img src="img/d_line.png" class="lineConf"/></a> 
-		 <a href="#"><img
-			src="img/a_line.png" class="lineConf"/></a> 
-		<a href="#"><img
-			src="img/p_line.png" class="lineConf"/></a> 
-			<a href="#"><img
-			src="img/t_line.png" class="lineConf"/></a> 
+		<a class="easyui-linkbutton" name="0" data-options="toggle:true,group:'g3'"><img src="img/line.png" class="lineConf"/></a>
+		<a class="easyui-linkbutton" name="1" data-options="toggle:true,group:'g3'"><img src="img/p_line.png" class="lineConf"/></a> 
+		<a class="easyui-linkbutton" name="2" data-options="toggle:true,group:'g3'"><img src="img/d_line.png" class="lineConf"/></a> 
+		<a class="easyui-linkbutton" name="3" data-options="toggle:true,group:'g3'"><img src="img/a_line.png" class="lineConf"/></a> 
+		<a class="easyui-linkbutton" name="4" data-options="toggle:true,group:'g3'"><img src="img/t_line.png" class="lineConf"/></a> 
+		
 		<span>线条粗细</span> <input id="lineWidth"
 			style="width: 60px" class="easyui-combobox"
 			data-options="
                      valueField:'label',
                      textField:'value',
                      data:[
-                     {label:'1',value:'5px'},
-                     {label:'2',value:'10px'}
+                     {label:'1',value:'1'},
+                     {label:'2',value:'2'},
+                     {label:'3',value:'3'},
+                     {label:'4',value:'4'},
+                     {label:'5',value:'5'},
+                     {label:'6',value:'6'},
+                     {label:'7',value:'7'},
+                     {label:'8',value:'8'}
                      ]" />
-		<span>线条颜色</span> <input id="lineColor" type="color" /> <span>字体大小</span>
-
+		<span>线条颜色</span> <input id="lineColor" type="color" /> 
+		<span>字体大小</span>
 		<input id="fontSize" style="width: 60px" class="easyui-combobox"
 			data-options="
                      valueField:'label',
                      textField:'value',
                      data:[
-                     {label:'1',value:'5px'},
-                     {label:'2',value:'10px'}
+                     {label:'1',value:'2'},
+                     {label:'2',value:'4'},
+                     {label:'3',value:'6'},
+                     {label:'4',value:'8'},
+                     {label:'5',value:'10'},
+                     {label:'6',value:'12'},
+                     {label:'7',value:'14'},
+                     {label:'8',value:'16'}
                      ]" />
-		<span>字体颜色</span> <input id="fontColor" type="color" /> <span>对齐方式</span>
+		<span>字体颜色</span> 
+		<input id="fontColor" type="color" /> 
+		<span>对齐方式</span>
 		<a href="#" class="easyui-linkbutton"
 			data-options="toggle:true,group:'g1'">左对齐</a> <a href="#"
 			class="easyui-linkbutton" data-options="toggle:true,group:'g1'">右对齐</a>
@@ -103,22 +113,21 @@ width:30px
 			data-options="toggle:true,group:'g1'">上对齐</a> <a href="#"
 			class="easyui-linkbutton" data-options="toggle:true,group:'g1'">下对齐</a>
 
-		<span>关联运算</span> <a href="#" class="easyui-linkbutton"
-			data-options="toggle:true,group:'g2'">交运算</a> <a href="#"
+		<span>关联运算</span> <a  name="intersection" class="easyui-linkbutton"
+			data-options="toggle:true,group:'g2'">交运算</a> <a  name="subtract"
 			class="easyui-linkbutton" data-options="toggle:true,group:'g2'">差运算</a>
-		<a href="#" class="easyui-linkbutton"
-			data-options="toggle:true,group:'g2'">并运算</a> <a href="#"
+		<a  name="union" class="easyui-linkbutton"
+			data-options="toggle:true,group:'g2'">并运算</a> <a  name="disjunction"
 			class="easyui-linkbutton" data-options="toggle:true,group:'g2'">补运算</a>
-
-
-	</div>
 	</div>
 	<!-- 图谱以及信息表  -->
-	<div>
+	
 	<div class="container">
 		<div class="easyui-tabs" id="t_map"></div>
+		<!--style="background:url(img/canvas_bg.jpg)"  -->
 		<canvas id="c" 
-			width="1300px" height="500px"></canvas>
+			width="1300px" height="700px" ></canvas>
+		
 		<div id="contextmenu-output"></div>
 		<div>
 			<div
@@ -142,10 +151,10 @@ width:30px
 				style="background: #E0E0E0; border: 1px solid #E0E0E0; width: 240px; height: 800px"></div>
 		</div>
 
-	</div>
+	
 	</div>
 	<div id="newpage" class="easyui-dialog" title="新增图谱"
-		style="width: 300px; height: 200px; padding: 10px 20px" closed="true"
+		style="width: 400px; height: 200px; padding: 10px 20px" closed="true"
 		buttons="#createpagebuttons">
 		<table cellspacing="8px">
 			<tr>
@@ -259,7 +268,7 @@ width:30px
 		</div>
 	</div>
 
-
+<script src="js/operateAltas.js"></script>
 
 	<script src="js/jquery-1.11.3.min.js"></script>
 	<script src="js/jstree.min.js"></script>
@@ -268,7 +277,8 @@ width:30px
 	<script src="js/jquery.contextMenu.js"></script>
 	<script src="js/jquery.ui.position.js"></script>
 	<script src="js/handsontable.full.js"></script>
-	<script type="text/javascript" src="js/operateXML.js"></script>
+	
+	  
 	<script type="text/javascript">
 		var canvas = new fabric.Canvas('c');
 
@@ -277,13 +287,17 @@ width:30px
 		var Title;
 		var contextMenuItems;
 		var currentNodeid;
-var w=100;
-var h=70;
-		//自定义模式的下拉框
-		/* $('#linestyle').combox({
-			 
-		 });*/
-		//node handsontable setting
+        //默认节点边框大小
+		var w=100;
+        var h=70;
+        //默认边框和字体
+        var lineColor='black';
+        var lineStyle=0;
+        var lineWidth=2;
+        var fontSize=10;
+        var fontColor='black';
+        
+        //人员分类属性表初始化
 		var hot = Handsontable(document.getElementById("hot"), {
 			colHeaders : [ '属性', '属性值', '备注' ],
 			height : 300,
@@ -295,7 +309,7 @@ var h=70;
 
 			manualColumnResize : true,
 		});
-		//people handsontable setting
+		//人员属性表初始化
 		var phot = Handsontable(document.getElementById("phot"), {
 			colHeaders : [ '属性', '属性值', '备注' ],
 			colWidths : 380,
@@ -305,8 +319,8 @@ var h=70;
 			rowHeaders : true,
 			manualColumnResize : true,
 		});
-		window.onload = function() {
-			//在canvas上层对象上添加右键事件监听
+		//在canvas上层对象上添加右键事件监听
+		window.onload = function() {	
 			$(".upper-canvas").contextmenu(onContextmenu);
 
 			//初始化右键菜单
@@ -434,6 +448,7 @@ var h=70;
 			//pimg.src=src;
 			//console.log(pimg)
 			//生成人员节点
+			
 			createGroup(n_x, n_y, w, h, Title, Nname, pimg);
 			nodeNum = nodeNum + 1;
 			//传人员节点的数据
@@ -496,6 +511,9 @@ var h=70;
 			/*$.post("lwy/tablePost.do", {nodeid:currentNodeid,tableid:selectedTabTitle,tabletitle:selectedTabTitle,changetabledata:data} , function(data) {
 						  //alert(data);
 			});*/
+			var selectedTab = $('#t_map').tabs('getSelected');
+			var pageTitle = selectedTab.panel('options').title;
+			
 			$.ajax({
 				url : "lwy/tablePost.do",
 				type : "post",
@@ -505,7 +523,8 @@ var h=70;
 					nodeid : currentNodeid,
 					tableid : selectedTabTitle,
 					tabletitle : selectedTabTitle,
-					changetabledata : JSON.stringify(data)
+					changetabledata : JSON.stringify(data),
+					pageTitle:pageTitle
 				},
 				success : function(data) {
 					// alert("测试进入success方法");
@@ -527,27 +546,10 @@ var h=70;
 		});
 		//保存
 		$('.save').click(function() {
-			savepageasXML();
+			savePageAsXML();
 		});
 
-		//新建图谱    
-		function createblankpage() {
-			var title = $('#pagetitle').val();
-			//添加图谱tab
-
-			$('#t_map').tabs('add', {
-				title : title,
-				closable : true
-			});
-			//保存当前tab的画布
-
-			//清空画布canvas
-			canvas.clear();
-			//清空dialog
-			$('#newpage').dialog("close");
-			$('#newpage').form("clear");
-		}
-
+		
 		//保存填写完的人员信息表
 		function savePeopleInfo() {
 			var obj = canvas.getActiveObject();
@@ -692,10 +694,11 @@ var h=70;
 												"parentid" : clickedNode.id,
 												"tablelist" : null
 											};
-											//得到新增节点的id
+											var selectedTab = $('#t_map').tabs('getSelected');
+											var pageTitle = selectedTab.panel('options').title;
 											$.post("lwy/createNode.do", {
 												changedata : JSON
-														.stringify(str)
+														.stringify(str),pageTitle:pageTitle
 											}, function(data) {
 												//alert(data);
 											});
@@ -814,11 +817,13 @@ var h=70;
 		//增加标签（包括目录和人员节点的信息标签）选中事件
 		$('#tt').tabs({
 			onSelect : function(title, index) {
-
+				var selectedTab = $('#t_map').tabs('getSelected');
+				var pageTitle = selectedTab.panel('options').title;
 				//加载表格数据
 				$.post("lwy/loadtabledata.do", {
 					tabtitle : title,
-					nodeid : currentNodeid
+					nodeid : currentNodeid,
+					pageTitle:pageTitle
 				}, function(data) {
 
 					// console.log(data);
@@ -875,8 +880,11 @@ var h=70;
 					//判断是否为叶子节点
 					currentNodeid = data.node.id;
 					var text = data.node.text;
+					//console.log(text)
 					var isLeaf = data.instance.is_leaf(data.node);
 					if (isLeaf) {
+						//从工具栏中的线条样式中获得线条和字体参数
+						
 						if (data.node.type == "people") {
 							var Ntitle = data.node.text;
 							Title = Ntitle;
@@ -888,6 +896,26 @@ var h=70;
 							var i = 0;
 							var sourceID, sourcex, sourcey;
 							var targetID, targetx, targety;
+							if($('a[group="g3"].l-btn-selected').attr("name")!=null){
+								lineStyle=$('a[group="g3"].l-btn-selected').attr("name");
+							}
+							
+						    //console.log($('a[group="g3"].l-btn-selected').attr("name"))
+							
+							
+							if($('#lineWidth').combobox('getValue')!=null){
+								lineWidth=$('#lineWidth').combobox('getValue');
+							}
+							
+							
+							lineColor=$('#lineColor').val();
+							    //console.log(lineColor)
+							if($('#fontSize').combobox('getValue')!=null){
+								fontSize=$('#fontSize').combobox('getValue');
+							}
+	
+							fontColor=$('#fontColor').val();
+							
 							canvas.on('object:selected', function() {
 
 								var obj = canvas.getActiveObject();
@@ -907,21 +935,20 @@ var h=70;
 									targetx = x;
 									targety = y;
 									i = 2;
-									//从工具栏中的线条样式中获得下面的参数
-									var lineStyle = 4;
-									var lineColor = 'black';
-									var lineWidth = 2;
-									drawShortestLine(lineStyle, lineWidth,
+									
+									//连线
+									
+									drawShortestLine(lineStyle, parseInt(lineWidth),
 											lineColor, sourcex, sourcey,
-											targetx, targety, w, h, text);
+											targetx, targety, w, h, text,parseInt(fontSize)*2,fontColor);
 									//传递数据到后台
 									var connectdata = {
-										"sourceid" : sourceID,
-										"targetid" : targetID,
+										"sourceId" : sourceID,
+										"targetId" : targetID,
 										"text" : data.node.text,
-										"lineStyle" : 0,
-										"lineColor" : 'black',
-										"lineWidth" : 2
+										"lineStyle" : lineStyle,
+										"lineColor" : lineColor,
+										"lineWidth" : lineWidth,
 									};
 									$.post("lwy/connectPost.do", {
 										data : JSON.stringify(connectdata)
@@ -1035,10 +1062,8 @@ var h=70;
 			},
 
 			onUnselect : function(title, index) {
-
 			}
-
-		});
+		});   
 	</script>
 </body>
 
