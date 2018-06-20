@@ -16,11 +16,11 @@
 
 <style type="text/css">
 .container {
-	border: 1px solid #E0E0E0;
+	
 	position: absolute;
 	left: 250px;
 	top: 58px;
-	width: 1220px
+	width: 1200px
 }
 
 .btn {
@@ -61,9 +61,9 @@ width:30px
 		</div>
 		<a href="javascript:void(0)" id="mode" class="easyui-menubutton" data-options="menu:'#m2',iconCls:'icon-large-clipart'">自定义模式</a>
 		<div id="m2" style="width: 150px;">
+			<div>朋友模式</div>
 			<div>家庭模式</div>
-			<div>部门模式</div>
-			<div>班级模式</div>
+			<div>同学模式</div>
 		</div>
 		<span>线条样式</span> 
 		<a class="easyui-linkbutton" name="0" data-options="toggle:true,group:'g3'"><img src="img/line.png" class="lineConf"/></a>
@@ -124,15 +124,14 @@ width:30px
 	
 	<div class="container">
 		<div class="easyui-tabs" id="t_map"></div>
-		<!--style="background:url(img/canvas_bg.jpg)"  -->
-		<canvas id="c" 
-			width="1300px" height="700px" ></canvas>
 		
+		<div id="Div" style="background:url(img/canvas_bg.jpg)">
+		<canvas id="c" 
+			width="1200px" height="700px"   ></canvas>
+		</div>
 		<div id="contextmenu-output"></div>
-		<div>
-			<div
-				style="border: 1px solid #E0E0E0; background: #CFD2D6; text-align: center; height: 30px">人员信息栏</div>
-			<div class="easyui-tabs" id="ptab" style="height: 30px"></div>
+		<div id="infoTable" class="easyui-dialog" title="人员信息栏" closed="true" style="width:1200px;height:250px;padding:10px; top:650px; left:250px;">
+			<div class="easyui-tabs" id="ptab" style="height: 30px;width:100%"></div>
 			<div id="phot"></div>
 			<button onclick="javascript:savePeopleInfo()">保存修改</button>
 		</div>
@@ -141,7 +140,7 @@ width:30px
 	</div>
 	
 	<!-- 图元和图谱目录 -->
-	<div id="treetab" class="easyui-tabs" style="width: 240px">
+	<div id="treetab" class="easyui-tabs" style=" width: 240px">
 		<div title="图元管理目录" data-options="selected:true">
 			<div id="jst"
 				style="background: #E0E0E0; border: 1px solid #E0E0E0; width: 240px; height: 800px;"></div>
@@ -290,12 +289,7 @@ width:30px
         //默认节点边框大小
 		var w=100;
         var h=70;
-        //默认边框和字体
-        var lineColor='black';
-        var lineStyle=0;
-        var lineWidth=2;
-        var fontSize=10;
-        var fontColor='black';
+
         
         //人员分类属性表初始化
 		var hot = Handsontable(document.getElementById("hot"), {
@@ -312,7 +306,7 @@ width:30px
 		//人员属性表初始化
 		var phot = Handsontable(document.getElementById("phot"), {
 			colHeaders : [ '属性', '属性值', '备注' ],
-			colWidths : 380,
+			colWidths : 378,
 			maxCols : 3,
 			minRows : 10,
 			contextMenu : false,
@@ -388,8 +382,8 @@ width:30px
 				var object = contextMenuItems[key].data;
 				canvas.remove(object);
 			} else if (key == "info") {
-				//关闭上一个节点的tabs
-
+				
+                $('#infoTable').dialog('open');
 				var tabs = $("#ptab").tabs("tabs");
 				var length = tabs.length;
 				for (var i = 0; i < length; i++) {
@@ -429,6 +423,7 @@ width:30px
 		function saveUser() {
 
 			var Nname = $('#name').val();
+			var idCardNum=$('#IDCardNum').val();
 			if (!Nname) {
 				alert("姓名不能为空！");
 				return;
@@ -451,11 +446,14 @@ width:30px
 			
 			createGroup(n_x, n_y, w, h, Title, Nname, pimg);
 			nodeNum = nodeNum + 1;
+			var selectedTab = $('#t_map').tabs('getSelected');
+			var selectedTabTitle = selectedTab.panel('options').title;
 			//传人员节点的数据
 			var data = {
 				"id" : nodeNum,
 				"title" : Title,
 				"name" : Nname,
+				"idCardNum":idCardNum,
 				"photo" : src,
 				//"photo":url,
 				"x" : n_x,
@@ -466,7 +464,8 @@ width:30px
 			};
 			$.post("lwy/peoplePost.do", {
 				data : JSON.stringify(data),
-				nodeid : currentNodeid
+				nodeid : currentNodeid,
+				pageTitle:selectedTabTitle
 			}, function(data) {
 				//alert(data);
 
@@ -558,12 +557,15 @@ width:30px
 			console.log(data);
 			var selectedTab = $('#ptab').tabs('getSelected');
 			var selectedTabTitle = selectedTab.panel('options').title;
+			var selectedTab1 = $('#t_map').tabs('getSelected');
+			var pageTitle = selectedTab.panel('options').title;
 			//传递人员的id
 			//把tablelist保存到人员信息中
 			$.post("lwy/infotablePost.do", {
 				pid : pid,
 				tabletitle : selectedTabTitle,
-				changetabledata : JSON.stringify(data)
+				changetabledata : JSON.stringify(data),
+				pageTitle:pageTitle
 			}, function(data) {
 				//alert(data);
 			});
@@ -620,6 +622,338 @@ width:30px
 				return false;
 			}
 		}
+		function drawPage(data){
+			
+    		 //先画节点
+    		 if(data.people!=null){
+        	 for(var i = 0;i<data.people.length;i++){
+        		 (function(i){
+        	
+        		  var x=data.people[i].x;
+        		  var y=data.people[i].y;
+        		  var w=data.people[i].width;
+        		  var h=data.people[i].height;
+        		  var t=data.people[i].title;
+        		  var n=data.people[i].name;
+        		  var s=data.people[i].photo;
+        		  //加载照片用相对路径		                				                		  
+        		  var img=new Image();
+        		  img.src=s;
+        		  img.style.width='30px';
+        	      img.style.height='45px';
+        		  img.onload=function(){
+        			  
+        			  createGroup(parseInt(x), parseInt(y), parseInt(w), parseInt(h), t, n , img);
+        		  }})(i);
+        	 }
+    		 }
+        	 if(data.connection!=null){
+            	 for(var i=0;i<data.connection.length;i++){
+            		 
+            		  var sid=data.connection[i].sourceId;
+            		  var tid=data.connection[i].targetId;
+                      var text=data.connection[i].text;
+                      var lineStyle=data.connection[i].lineStyle;
+                      var lineColor=data.connection[i].lineColor;
+                      var lineWidth=data.connection[i].lineWidth;
+            		  var sx;
+            		  var sy;
+            		  var tx;
+            		  var ty;
+            		  var w;
+            		  var h;
+            		  
+	                  for(var j=0;j<data.people.length;j++){
+	                		if(data.people[j].idCardNum==sid){
+		                		  sx=data.people[j].x;
+		                		  sy=data.people[j].y;
+		                		  w=data.people[j].width;
+		                		  h=data.people[j].height;
+	                		}else if(data.people[j].idCardNum==tid){
+	                			  tx=data.people[j].x;
+		                		  ty=data.people[j].y;
+	                		}
+	                	}
+                       //当关联运算时data.people[j].idCardNum==sid  用idCardNum判断
+	                  
+            		  drawShortestLine(lineStyle,parseInt(lineWidth),lineColor,parseInt(sx),parseInt(sy),parseInt(tx),parseInt(ty),parseInt(w),parseInt(h),text);
+            		
+
+            	 }
+             }
+		}
+
+		           //保存图谱
+					function savePageAsXML(){
+						var selectedTab = $('#t_map').tabs('getSelected');
+						var selectedTabTitle = selectedTab.panel('options').title;
+						//console.log(nodeTreeData);
+						//alert(currentNodeid);
+						//数据传到后台				
+						$.post("lwy/pagePost.do", {pageid:selectedTabTitle,pagetitle:selectedTabTitle} , function(data) {
+									  //alert(data);
+					});
+					}
+					
+					//加载本地xml文件得到路径
+					function openPageAsXml(obj){
+						      //得到工具栏中选择的关联方法
+					         // var method="union";
+						    //jstreeOnload();
+					      	var method=$('a[group="g2"].l-btn-selected').attr("name");
+							var selectedFile = document.getElementById('openFile').files[0];
+				            var fileName = selectedFile.name;//读取选中文件的文件名
+				            //console.log("文件名:"+name);
+				            
+				            var index1=fileName.lastIndexOf(".");		           
+				            var filename=fileName.substring(0,index1);
+				           // console.log("文件名:"+suffix)
+				           
+				            var reader = new FileReader();//这是核心,读取操作就是由它完成.
+				            reader.readAsText(selectedFile);//读取文件的内容,也可以读取文件的URL
+				            reader.onload = function () {
+				                //判断是否要做关联运算
+				                 if(method!=null){
+				                	 var selectedTab = $('#t_map').tabs('getSelected');
+				                	 var pageTitle;
+				                	 if(selectedTab!=null){
+				                		 pageTitle = selectedTab.panel('options').title;
+				                	 }						 
+				                	 $.post("lwy/xmlCalculate.do", {data:this.result,fileName:filename,associateMethod:method,pageTitle:pageTitle} , function(data) {
+					                	// console.log(data)
+			                             //新增图谱页
+					                	 if(data.people==null){
+					                		 //console.log("111111")
+					                		 $('#newpage').dialog("open");
+					                		 
+					                	 }else{
+					                		 $('a[group="g2"].l-btn-selected').removeClass("l-btn-selected");
+					                		
+					                		 drawPage(data);
+					                		 
+					                	 }
+					                	 
+					                	
+					                	 
+									});	
+				                 }
+				                 else{
+				                //文件内容为this.result
+				                 $.post("lwy/xmlPost.do", {data:this.result,fileName:filename} , function(data) {
+				                	 console.log(data)
+		                            //增加tab
+				            $('#t_map').tabs('add', {
+							title:filename,
+							closable:true
+						   });
+				                	//在图谱管理目录中新增一个子节点
+				            $('#jst_map').jstree('create_node', $('#map'), { "text":filename, "id":filename }, "last", false, false);
+				                	// drawPage(data);
+				                	
+				                	 
+								});	
+				                 }
+				                
+				            }	
+					}
+					//新建图谱    
+					function createblankpage() {
+						var title = $('#pagetitle').val();
+						//添加图谱tab
+
+						$('#t_map').tabs('add', {
+							title : title,
+							closable : true
+						});
+						//保存当前tab的画布
+                        jstreeOnload();
+						//清空画布canvas
+						canvas.clear();
+						//清空dialog
+						$('#newpage').dialog("close");
+						$('#newpage').form("clear");
+					}
+
+					var w = 100;
+					var h = 70;
+		            //生成节点
+					function createGroup(posX, posY, width,height,newTitle, newName, pimg) {
+						
+						var Rect = new fabric.Rect({
+							left: posX,
+							top: posY,
+							stroke: 'black',
+							strokeWidth: 3,
+							fill: 'white',
+							width: width,
+							height: height
+						});
+						var pName = new fabric.Text(newName, {
+							left: posX + 60,
+							top: posY + 40,
+							fontSize: 10,
+						});
+						var title = new fabric.Text(newTitle, {
+							left: posX + 50,
+							top: posY + 20,
+							fontSize: 10
+						});
+						var img = new fabric.Image(pimg, {
+							left: posX + 10,
+							top: posY + 10,
+						});
+						var group = new fabric.Group([Rect, pName, title, img], {
+							left: posX,
+							top: posY,
+							id: nodeNum
+						});
+						canvas.add(group);
+					
+					}
+		            //连线算法 主要有带箭头的线直线虚线折线和有text的线
+		             function drawLine(style, linewidth, linecolor,x1,y1,x2,y2,text,fontsize,fontcolor){	
+						switch (style)
+		            	{
+						//直线
+		            	case "0":
+		            		drawStraightLine(x1, y1, x2, y2, linewidth, linecolor) ;
+		            	  break;
+		            	//折线
+		            	case "1":
+		            		drawPolyLine(x1, y1, x2, y2, linewidth, linecolor);
+		            	  break;           
+		            	//虚线
+		            	case "2":
+		            		drawDashedLine(x1, y1, x2, y2, linewidth, linecolor);
+		            	  break;
+		                //带箭头的线
+		            	case "3":
+		            		drawArrowLine(x1, y1, x2, y2, linewidth, linecolor);
+		            	  break;
+		            	//带文字的线
+		            	case "4":
+		            		drawTextLine(x1, y1, x2, y2, linewidth, linecolor,text,fontsize,fontcolor);
+		            	  break;
+		            	}
+						
+					}
+		           //画直线
+		 			function drawStraightLine(x1, y1, x2, y2, linewidth, linecolor) {
+		        	    
+		 				var line = new fabric.Line([x1, y1, x2, y2], {
+		 					stroke:linecolor,
+							strokeWidth: linewidth,
+		 				});
+		 				canvas.add(line);
+		 			}
+		            //画虚线算法
+		            function drawDashedLine(x1, y1, x2, y2, linewidth, linecolor){
+		            	var dashedline=new fabric.Line([x1, y1, x2, y2], {
+		            		stroke: linecolor,
+							strokeWidth: linewidth,
+							strokeDashArray: [10, 5] 	
+						});
+						canvas.add(dashedline);
+		            }
+					//画折线算法		
+					function drawPolyLine(x1, y1, x2, y2, linewidth, linecolor) {
+
+						var poly = new fabric.Polyline([{
+								x: x1,
+								y: y1
+							},
+							{//计算一个转折还是两个转折
+								x: x1,
+								y: y2
+							},
+							{
+								x: x2,
+								y: y2
+							}
+						], {
+							stroke: linecolor,
+							strokeWidth: linewidth,
+							fill: 'white',
+						});
+						canvas.add(poly);
+					}
+					
+					//画带箭头的连线算法
+					function drawArrowLine(x1, y1, x2, y2, linewidth, linecolor) {
+						
+						 canvasObject = new fabric.Path(drawArrow(x1, y1, x2, y2, 30, 30), {
+					          stroke: linecolor,
+					          fill: "rgba(255,255,255,0)",
+					          strokeWidth: linewidth
+					        });
+		 				canvas.add(canvasObject);
+					}
+					//画箭头
+					function drawArrow(fromX, fromY, toX, toY, theta, headlen) {
+					    theta = typeof theta != "undefined" ? theta : 30;
+					    headlen = typeof theta != "undefined" ? headlen : 10;
+					    // 计算各角度和对应的P2,P3坐标
+					    var angle = Math.atan2(fromY - toY, fromX - toX) * 180 / Math.PI,
+					      angle1 = (angle + theta) * Math.PI / 180,
+					      angle2 = (angle - theta) * Math.PI / 180,
+					      topX = headlen * Math.cos(angle1),
+					      topY = headlen * Math.sin(angle1),
+					      botX = headlen * Math.cos(angle2),
+					      botY = headlen * Math.sin(angle2);
+					    var arrowX = fromX - topX,
+					      arrowY = fromY - topY;
+					    var path = " M " + fromX + " " + fromY;
+					    path += " L " + toX + " " + toY;
+					    arrowX = toX + topX;
+					    arrowY = toY + topY;
+					    path += " M " + arrowX + " " + arrowY;
+					    path += " L " + toX + " " + toY;
+					    arrowX = toX + botX;
+					    arrowY = toY + botY;
+					    path += " L " + arrowX + " " + arrowY;
+					    return path;
+					  }
+					//画带text的连线算法
+					function drawTextLine(x1, y1, x2, y2, linewidth, linecolor,text,fontsize,fontcolor){
+						//console.log(fontsize)
+						//console.log(text)
+						var t = new fabric.Text(text, {
+							left: (x1+x2)/2,
+							top: (y1+y2)/2,
+							fontSize: 10
+							//fontSize: fontsize,
+							//fontColor: fontcolor
+						});
+						var line = new fabric.Line([x1, y1, x2, y2], {
+		 					stroke:linecolor,
+							strokeWidth: linewidth,
+		 				});
+						var group = new fabric.Group([t,line], {
+						
+						});
+						canvas.add(group);
+					}
+					
+					//直线最短路径算法
+					function drawShortestLine(style, linewidth, linecolor,x1, y1, x2, y2, w, h,text,fontsize,fontcolor) {
+						if(y2 < y1 - 3 * h / 4) {
+							if(x2 > x1 + 3 * w / 4) drawLine(style, linewidth, linecolor,x1 + w, y1, x2, y2 + h,text,fontsize,fontcolor);
+							else if(x2 < x1 - 3 * w/ 4) drawLine(style, linewidth, linecolor,x1, y1, x2 + w, y2 + h,text,fontsize,fontcolor);
+							else drawLine(style, linewidth, linecolor,x1 + w / 2, y1, x2 + w / 2, y2 + h,text,fontsize,fontcolor);
+						} else if(y2 > y1 + 3 * h / 4) {
+							if(x2 > x1 + 3 * w/ 4) drawLine(style, linewidth, linecolor,x1 + w, y1 + h, x2, y2,text,fontsize,fontcolor);
+							else if(x2 < x1 - 3 * w / 4) drawLine(style, linewidth, linecolor,x1, y1 + h, x2 + w, y2,text,fontsize,fontcolor);
+							else drawLine(style, linewidth, linecolor,x1 + w / 2, y1 + h, x2 + w / 2, y2,text,fontsize,fontcolor);
+						} else {
+							if(x2 < x1 - w) drawLine(style, linewidth, linecolor,x1, y1 + h / 2, x2 + w, y2 + h / 2,text,fontsize,fontcolor);
+							else if(x2 > x1 + w) drawLine(style, linewidth, linecolor,x1 + w, y1 + h / 2, x2, y2 + h / 2,text,fontsize,fontcolor);
+						}
+					}
+		
+		var nodeTreeData=[{"id" : "people","text" : "人员","state" : { "opened" : true},"type" : "people",},
+		                   {"id" : "relate","text" : "关系","state" : { "opened" : true},"type" : "relate",} ];
+		
+		   
 		$('#jst')
 				.jstree(
 						{
@@ -628,25 +962,8 @@ width:30px
 									"stripes" : true
 								},
 								"check_callback" : true, // enable all modifications
-								"data" : [
-								//用ajax加载数据
-								{
-									"id" : "people",
-									"text" : "人员",
-									"state" : { //默认状态展开  
-										"opened" : true
-									},
-									"type" : "people",
-
-								}, {
-									"id" : "relate",
-									"text" : "关系",
-									"state" : { //默认状态展开  
-										"opened" : true
-									},
-									"type" : "relate",
-
-								} ],
+								"data" : nodeTreeData,
+								
 
 							},
 							"types" : {
@@ -665,27 +982,15 @@ width:30px
 
 								"items" : {
 									"create" : {
-										"label" : "新增",
+										"label" : "新增分类",
 										"action" : function(obj) {
 											$('#dlg_1').dialog("close");
-											var inst = jQuery.jstree
-													.reference(obj.reference);
-											var clickedNode = inst
-													.get_node(obj.reference);
-
-											var newNode = inst.create_node(
-													obj.reference,
-													clickedNode.val);
-											var ty = inst
-													.get_type(obj.reference);
+											var inst = jQuery.jstree.reference(obj.reference);
+											var clickedNode = inst.get_node(obj.reference);
+											var newNode = inst.create_node(obj.reference,clickedNode.val);
+											var ty = inst.get_type(obj.reference);
 											inst.set_type(newNode, ty);
-											//$('#createtreeNode').dialog("open");
-											//$('#createNode').click(function(){
-											//	inst.set_text(newNode,$('#nodeName').val());
-											//	var parentNode=inst.get_json(clickedNode);
-											//	console.log(parentNode)
-											var Nodeobj = inst
-													.get_json(newNode);
+											var Nodeobj = inst.get_json(newNode);
 											var str = {
 												"id" : Nodeobj.id,
 												"text" : Nodeobj.text,
@@ -696,124 +1001,65 @@ width:30px
 											};
 											var selectedTab = $('#t_map').tabs('getSelected');
 											var pageTitle = selectedTab.panel('options').title;
-											$.post("lwy/createNode.do", {
-												changedata : JSON
-														.stringify(str),pageTitle:pageTitle
-											}, function(data) {
-												//alert(data);
-											});
-											//$('#createtreeNode').dialog("close");
-											//$('#createtreeNode').form("clear");
-											//});
-
+											$.post("lwy/createNode.do", {changedata : JSON.stringify(str),pageTitle:pageTitle}, 
+													function(data) {});
 											inst.edit(newNode);
-
 											inst.open_node(obj.reference);
-
 										},
-									},
-									"rename" : {
-										"label" : "重命名",
-										"action" : function(obj) {
-											$('#dlg_1').dialog("close");
-											var inst = jQuery.jstree
-													.reference(obj.reference);
-											var clickedNode = inst
-													.get_node(obj.reference);
-											inst.edit(obj.reference,
-													clickedNode.val);
-											//$('#renametreeNode').dialog("open");
-											//$('#renameNode').click(function(){
-											//	inst.set_text(clickedNode,$('#newnodeName').val());
-											//修改节点名称
-											$.post("lwy/renameNode.do", {
-												changedata : clickedNode.text,
-												nodeid : clickedNode.id
-											}, function(data) {
-												//alert(data);
-											});
-											//	$('#renametreeNode').dialog("close");
-											//	$('#renametreeNode').form("clear");
-											//}
-											//			);
-
-										}
-									},
-									"delete" : {
-										"label" : "删除",
-										"action" : function(obj) {
-											$('#dlg_1').dialog("close");
-											var inst = jQuery.jstree
-													.reference(obj.reference);
-											var clickedNode = inst
-													.get_node(obj.reference);
-											inst.delete_node(obj.reference);
-											//删除后台nodelist数据
-											var result = [];
-											result.push(clickedNode.id);
-											var childNodes = inst
-													.get_children_dom(clickedNode);
-											for (var i = 0; i < childNodes.length; i++) {
-												var row = childNodes[i];
-												if ($.inArray(row.Id, result) == -1) {
-													result.push(row.id);
-												}
-												// getChildNodes(row, result);
-											}
-											console.log(result)
-										}
-
 									},
 									"editTable" : {
 										"label" : "管理信息表",
 										"action" : function(obj) {
 											$('#dlg_1').dialog("close");
 											$('#editTable').dialog("open");
-											//关闭上一个节点的tabs
 											var tabs = $("#tt").tabs("tabs");
 											var length = tabs.length;
 											for (var i = 0; i < length; i++) {
 												var onetab = tabs[0];
-												var title = onetab
-														.panel('options').tab
-														.text();
+												var title = onetab.panel('options').tab.text();
 												$("#tt").tabs("close", title);
 											}
 											//清空表格
 											hot.loadData(null);
 											//加载节点的信息表
 											//用currentnodeid加载人员信息表格
-											$
-													.post(
-															"lwy/loadpeopletab.do",
-															{
-																nodeid : currentNodeid
-															},
+											$.post("lwy/loadpeopletab.do",{nodeid : currentNodeid},
 															function(data) {
-
 																for (var i = 0; i < data.length; i++) {
-																	$('#tt')
-																			.tabs(
-																					'add',
-																					{
-																						title : data[i],
-																						closable : true
-																					});
-
+																	$('#tt').tabs('add',{
+																		title : data[i],
+																		closable : true
+																    });
 																}
 															});
-
-											// var inst = jQuery.jstree.reference(obj.reference);
-											// var clickedNode = inst.get_node(obj.reference);
-
 										}
 
-									}
+									},
+									"rename" : {
+										"label" : "重命名",
+										"action" : function(obj) {
+											$('#dlg_1').dialog("close");
+											var inst = jQuery.jstree.reference(obj.reference);
+											var clickedNode = inst.get_node(obj.reference);
+											inst.edit(obj.reference,clickedNode.val);
+										}
+									},
+									"delete" : {
+										"label" : "删除分类",
+										"action" : function(obj) {
+											$('#dlg_1').dialog("close");
+											var inst = jQuery.jstree.reference(obj.reference);
+											var clickedNode = inst.get_node(obj.reference);
+											inst.delete_node(obj.reference);
+									},
+									
+									
 
 								}
 							}
+						}
 						});
-
+		
 		//增加标签（包括目录和人员节点的信息标签）选中事件
 		$('#tt').tabs({
 			onSelect : function(title, index) {
@@ -880,6 +1126,10 @@ width:30px
 					//判断是否为叶子节点
 					currentNodeid = data.node.id;
 					var text = data.node.text;
+					//默认线条和字体样式
+					 var lineStyle=0;
+					$('#lineWidth').combobox('select','2');
+			        $('#fontSize').combobox('select','10');
 					//console.log(text)
 					var isLeaf = data.instance.is_leaf(data.node);
 					if (isLeaf) {
@@ -892,7 +1142,8 @@ width:30px
 							//弹出人员信息对话框
 							//$('#createTable').dialog("open");
 							$('#dlg_1').dialog("open");
-						} else if (data.node.type == "relate") {
+						} 
+						else if (data.node.type == "relate" && data.node.text!="关系") {
 							var i = 0;
 							var sourceID, sourcex, sourcey;
 							var targetID, targetx, targety;
@@ -950,8 +1201,11 @@ width:30px
 										"lineColor" : lineColor,
 										"lineWidth" : lineWidth,
 									};
+									var selectedTab = $('#t_map').tabs('getSelected');
+									var pageTitle = selectedTab.panel('options').title;
 									$.post("lwy/connectPost.do", {
-										data : JSON.stringify(connectdata)
+										data : JSON.stringify(connectdata),
+										pageTitle:pageTitle
 									}, function(data) {
 										//alert(data);
 									});
@@ -1054,10 +1308,16 @@ width:30px
 		$('#t_map').tabs({
 			onSelect : function(title, index) {
 				//选择时清空画布
-				var canvas = $('#c'); //选择要擦除的canvas元素
-				var context = canvas.get(0).getContext('2d'); //获取canvas上下文           
-				context.clearRect(0, 0, canvas.width(), canvas.height());
-				//回传page的名字加载相应的xml
+				canvas.clear();
+				
+				//传图谱名称加载后台图谱数据
+				$.post("lwy/pageLoad.do", {
+					pageTitle:title
+				}, function(data) {
+					
+					drawPage(data);
+				});	
+			
 
 			},
 

@@ -53,13 +53,15 @@ import net.sf.json.JSONObject;
 @RequestMapping("lwy")
 
 public class UserController {  
-	   List<people> p=new ArrayList<people>();
-	   List<connection> connect=new ArrayList<connection>();   
+	   //List<people> p=new ArrayList<people>();
+	   //List<connection> connect=new ArrayList<connection>();   
 	   //List<node> nodelist=new ArrayList<node>();
 	   //List<nodeTable> tablelist=new ArrayList<nodeTable>();
 	   Map<String,List<nodeTable>> nodemap=new HashMap<String, List<nodeTable> >();	 
 	   Map<String,List<node>> nodeTreeMap=new HashMap<String,List<node>>();
 	   Map<String,List<nodeTable>> peopleInfomap=new HashMap<String, List<nodeTable> >();
+	   Map<String,List<people>> peopleMap=new HashMap<String, List<people> >();
+	   Map<String,List<connection>> connectMap=new HashMap<String, List<connection> >();
 public void IninJstree(){
 	
 }
@@ -208,15 +210,21 @@ public List<String>  loadTab(String nodeid) {
 //保存人员节点的信息
 @RequestMapping("/peoplePost.do")
 @ResponseBody
-public void savePeople(String data,String nodeid) {
+public void savePeople(String data,String nodeid,String pageTitle) {
      
 	    //System.out.println(data);	
 		String nodeStr=data;		
 		JSONObject jsonObject=JSONObject.fromObject(nodeStr);
 		
 		people people=(people)JSONObject.toBean(jsonObject, people.class);
-		
-		p.add(people);
+		List<people> pList=new ArrayList<people>();
+		if(peopleMap.get(pageTitle)!=null){
+			peopleMap.get(pageTitle).add(people);
+		}else{
+			pList.add(people);
+			peopleMap.put(pageTitle, pList);
+		}
+		//p.add(people);
 		if(nodemap.get(nodeid)!=null){
 			peopleInfomap.put(people.getId(), nodemap.get(nodeid));
 		}
@@ -229,7 +237,7 @@ public void savePeople(String data,String nodeid) {
 //保存人员infotable
 @RequestMapping("/infotablePost.do")
 @ResponseBody
-public void saveinfoTable(String pid,String tabletitle,String changetabledata) {
+public void saveinfoTable(String pid,String tabletitle,String changetabledata,String pageTitle) {
 	    //修改map里的数据
 	    System.out.println(changetabledata);
 	    
@@ -240,7 +248,7 @@ public void saveinfoTable(String pid,String tabletitle,String changetabledata) {
 	    }
 	    peopleInfomap.put(pid,peopleInfomap.get(pid));
 	   //保存到people实体中
-	    for(people p:p){
+	    for(people p:peopleMap.get(pageTitle)){
 	    	if(p.getId().equals(pid)){
 	    		p.setInfoTableList(peopleInfomap.get(pid));
 	    	}
@@ -283,14 +291,21 @@ public List<String> loadinfotab(String pid) {
 //保存人员关系的信息
 @RequestMapping("/connectPost.do")
 @ResponseBody
-public void saveConnection(String data) {
+public void saveConnection(String data,String pageTitle) {
    
 	    //System.out.println(data);	
 		String nodeStr=data;		
 		JSONObject jsonObject=JSONObject.fromObject(nodeStr);
 		
 		connection connection=(connection)JSONObject.toBean(jsonObject,connection.class);
-		connect.add(connection);
+		List<connection> cList=new ArrayList<connection>();
+		if(connectMap.get(pageTitle)!=null){
+			connectMap.get(pageTitle).add(connection);
+		}else{
+			cList.add(connection);
+			connectMap.put(pageTitle, cList);
+		}
+		//connect.add(connection);
 		//System.out.println("connection:"+connection);
 		
   }
@@ -302,8 +317,10 @@ public void savepagedata(String pageid,String pagetitle) throws IOException {
        page=new  page();
        page.setId(pageid);
        page.setTitle(pagetitle);
-       page.setPeople(p);
-       page.setConnect(connect);
+       page.setPeople(peopleMap.get(pagetitle));
+       //把id转化为身份证号进行保存
+       List<connection> transConnectList=AssociateUtil.transformIdToIdCardNum(connectMap.get(pagetitle), peopleMap.get(pagetitle));
+       page.setConnect(transConnectList);
        // System.out.println(pageid);
        //将得到的page转为xml
        
@@ -316,15 +333,27 @@ public void savepagedata(String pageid,String pagetitle) throws IOException {
     
 }
 
+//加载图谱
+@RequestMapping("/pageLoad.do")
+@ResponseBody
+public Map<String,Object> loadPage(String pageTitle)  {
+
+	Map<String,Object> map=new HashMap<String, Object>();
+	map.put("people", peopleMap.get(pageTitle));
+	map.put("connection", connectMap.get(pageTitle));
+	return map;
+}
 //图谱前台显示
 	   
 @RequestMapping("/xmlPost.do")
 @ResponseBody
-public Map<String,Object> loadPage(String data,String fileName) throws Exception {
+public Map<String,Object> loadXML(String data,String fileName) throws Exception {
 	people p=new people();
 	connection c=new connection();
 	Map<String,Object> map=new HashMap<String, Object>();
 	map=XmlUtil.readpeopleXml(data,p,c);
+	peopleMap.put(fileName, (List<people>) map.get("people"));
+	connectMap.put(fileName, (List<connection>) map.get("connection"));
 	return map;
 }
 
@@ -332,7 +361,7 @@ public Map<String,Object> loadPage(String data,String fileName) throws Exception
 Map<String,Map<String,Object>> pageMap=new HashMap<String, Map<String,Object>>();
 @RequestMapping("/xmlCalculate.do")
 @ResponseBody
-public Map<String,Object> calculatePages(String data,String fileName,String associateMethod) throws Exception {
+public Map<String,Object> calculatePages(String data,String fileName,String associateMethod,String pageTitle) throws Exception {
 	//System.out.println(fileName);
 	people p=new people();
 	connection c=new connection();
@@ -366,16 +395,19 @@ public Map<String,Object> calculatePages(String data,String fileName,String asso
 	    List<connection> connectList=(List<connection>) value.get("connection");
 	    if(firstPeopleList==null){
 	    	firstPeopleList=peopleList;
-	    	firstConnectList=AssociateUtil.transformIdToIdCardNum(connectList,peopleList);//将sourceid targetid都改为身份证号
+	    	firstConnectList=connectList;
+	    	//firstConnectList=AssociateUtil.transformIdToIdCardNum(connectList,peopleList);//将sourceid targetid都改为身份证号
 	    	pList_1=AssociateUtil.getPeopleIdCardNumCollect(firstPeopleList);
 	    }else{
 	    	if(secondPeopleList==null){
 	    	secondPeopleList=peopleList;
-	    	secondConnectList=AssociateUtil.transformIdToIdCardNum(connectList,peopleList);;
+	    	secondConnectList=connectList;
+	    	//secondConnectList=AssociateUtil.transformIdToIdCardNum(connectList,peopleList);;
 	        pList_2=AssociateUtil.getPeopleIdCardNumCollect(secondPeopleList);
 	    	}
 	    }	      
 	}  
+	pageMap.clear();
 	switch(associateMethod){
     case "intersection":
     	associateMap=AssociateUtil.getIntersection(firstPeopleList,firstConnectList,secondPeopleList,secondConnectList,pList_1,pList_2);break;
@@ -388,6 +420,10 @@ public Map<String,Object> calculatePages(String data,String fileName,String asso
     default:
         associateMap=map; break;
     }
+	if(pageTitle!=null){
+		peopleMap.put(pageTitle, (List<people>) associateMap.get("people"));
+		connectMap.put(pageTitle, (List<connection>) associateMap.get("connection"));
+	}
 	}
 	//System.out.println(pageMap);
 	//return map;
